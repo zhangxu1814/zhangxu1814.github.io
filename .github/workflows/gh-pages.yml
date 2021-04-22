@@ -1,4 +1,4 @@
-name: hugo
+name: build
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
       - master
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
     steps:
       - name: 'Building...'
