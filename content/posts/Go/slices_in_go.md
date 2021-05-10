@@ -432,3 +432,230 @@ fmt.Println(slice)
 
 ## Append: An example
 
+在[Capacity](#capacity)那一节中，我们写了个 `Extend` 函数来为切片扩展一个元素。程序在运行时会报错，因为我们设定的切片的容量太小，导致底层数组越界访问造成程序崩溃。现在我们已经解决了这一问题，可以编写一个健壮的 `Extend` 的实现：
+```go
+func Extend(slice []int, element int) []int {
+    n := len(slice)
+    if n == cap(slice) {
+        // Slice is full; must grow.
+        // We double its size and add 1, so if the size is zero we still grow.
+        newSlice := make([]int, len(slice), 2*len(slice)+1)
+        copy(newSlice, slice)
+        slice = newSlice
+    }
+    slice = slice[0 : n+1]
+    slice[n] = element
+    return slice
+}
+```
+这个例子中我们返回了一个切片，因为与原切片相比，返回的切片实际上指向了我们重新分配的底层数组，与原切片完全不同。下面这段代码展示了切片在填充过程中发生了什么：
+```go
+slice := make([]int, 0, 5)
+for i := 0; i < 10; i++ {
+    slice = Extend(slice, i)
+    fmt.Printf("len=%d cap=%d slice=%v\n", len(slice), cap(slice), slice)
+    fmt.Println("address of 0th element:", &slice[0])
+}
+```
+其结果为：
+```
+len=1 cap=5 slice=[0]
+address of 0th element: 0xc00007a030
+len=2 cap=5 slice=[0 1]
+address of 0th element: 0xc00007a030
+len=3 cap=5 slice=[0 1 2]
+address of 0th element: 0xc00007a030
+len=4 cap=5 slice=[0 1 2 3]
+address of 0th element: 0xc00007a030
+len=5 cap=5 slice=[0 1 2 3 4]
+address of 0th element: 0xc00007a030
+len=6 cap=11 slice=[0 1 2 3 4 5]
+address of 0th element: 0xc000062060
+len=7 cap=11 slice=[0 1 2 3 4 5 6]
+address of 0th element: 0xc000062060
+len=8 cap=11 slice=[0 1 2 3 4 5 6 7]
+address of 0th element: 0xc000062060
+len=9 cap=11 slice=[0 1 2 3 4 5 6 7 8]
+address of 0th element: 0xc000062060
+len=10 cap=11 slice=[0 1 2 3 4 5 6 7 8 9]
+address of 0th element: 0xc000062060
+```
+原始数组容量只有5，当原始数组被填满时，重新分配了一个容量为11的数组，此时第0个元素的地址也改变了。
+
+根据这个例子的思路，我们可以写一个更好的函数 `Append` 来为切片一次性扩充多个元素。这我们会用到 `Go` 语言的可变参数函数，在声明可变参数函数时，需要在参数列表的最后一个参数类型之前加上省略符号“...”，这表示该函数会接收任意数量的该类型参数。
+
+作为最初的实现，我们可以将对 `Extend` 进行多次调用。 `Append` 的函数签名如下：
+```go
+func Append(slice []int, items ...int) []int
+```
+`Append` 函数接收一个切片以及任意多个 `int` 类型的元素，这些元素实际上被当成一个切片来进行处理：
+```go
+// Append appends the items to the slice.
+// First version: just loop calling Extend.
+func Append(slice []int, items ...int) []int {
+    for _, item := range items {
+        slice = Extend(slice, item)
+    }
+    return slice
+}
+```
+执行以下语句：
+```go
+slice := []int{0, 1, 2, 3, 4}
+fmt.Println(slice)
+slice = Append(slice, 5, 6, 7, 8)
+fmt.Println(slice)
+```
+其结果为：
+```
+[0 1 2 3 4]
+[0 1 2 3 4 5 6 7 8]
+```
+注意到这里我们同时声明并初始化了一个切片：
+```go
+slice := []int{0, 1, 2, 3, 4}
+```
+我们不仅可以传入任意多个参数，还可以以切片的形式传入参数，不过必须在切片后面加上 `...` ：
+```go
+slice1 := []int{0, 1, 2, 3, 4}
+slice2 := []int{55, 66, 77}
+fmt.Println(slice1)
+slice1 = Append(slice1, slice2...) // The '...' is essential!
+fmt.Println(slice1
+```
+其结果为：
+```
+[0 1 2 3 4]
+[0 1 2 3 4 55 66 77]
+```
+我们可以改写一下重分配数组的条件，使其更有效率：
+```go
+// Append appends the elements to the slice.
+// Efficient version.
+func Append(slice []int, elements ...int) []int {
+    n := len(slice)
+    total := len(slice) + len(elements)
+    if total > cap(slice) {
+        // Reallocate. Grow to 1.5 times the new size, so we can still grow.
+        newSize := total*3/2 + 1
+        newSlice := make([]int, total, newSize)
+        copy(newSlice, slice)
+        slice = newSlice
+    }
+    slice = slice[:total]
+    copy(slice[n:], elements)
+    return slice
+}
+```
+这里我们使用了两次 `copy` ，一次用于将数据复制进新的数组，一次用于将新的数据复制到数组的末尾。这和最初的函数具有同样的效力。
+
+## Append: The build-in function
+
+到此我们已经明白了内置函数 `append` 的设计动机。它和我们的 `Append` 相似，效率上也差不多，但是它适用于任何切片类型。
+
+`Go` 语言的一个缺点是任何泛型操作必须由运行时提供。以后也许会改变，但是现在，为了使切片操作更加简单， `Go` 提供了内置的泛型 `append` 函数。它适用于任何类型。
+
+由于切片头结构体经常会被 `append` 修改，你需要保存返回的切片值。事实上，编译器不允许你在不保存结果的情况下调用 `append` 。
+
+下面是一些使用 `append` 的语句：
+```go
+// Create a couple of starter slices.
+slice := []int{1, 2, 3}
+slice2 := []int{55, 66, 77}
+fmt.Println("Start slice: ", slice)
+fmt.Println("Start slice2:", slice2)
+
+// Add an item to a slice.
+slice = append(slice, 4)
+fmt.Println("Add one item:", slice)
+
+// Add one slice to another.
+slice = append(slice, slice2...)
+fmt.Println("Add one slice:", slice)
+
+// Make a copy of a slice (of int).
+slice3 := append([]int(nil), slice...)
+fmt.Println("Copy a slice:", slice3)
+
+// Copy a slice to the end of itself.
+fmt.Println("Before append to self:", slice)
+slice = append(slice, slice...)
+fmt.Println("After append to self:", slice)
+```
+运行结果为：
+```
+Start slice:  [1 2 3]
+Start slice2: [55 66 77]
+Add one item: [1 2 3 4]
+Add one slice: [1 2 3 4 55 66 77]
+Copy a slice: [1 2 3 4 55 66 77]
+Before append to self: [1 2 3 4 55 66 77]
+After append to self: [1 2 3 4 55 66 77 1 2 3 4 55 66 77]
+```
+有必要花点时间思考一下最后一行的示例来理解切片的设计如何使这个操作正确的执行
+
+在["Slice Tricks"](https://github.com/golang/go/wiki/SliceTricks)有更多的关于 `append` 、`copy` 以及切片的其他用法的例子。
+
+## Nil
+
+现在我们可以来看一下 `nil` 切片代表着什么。自然的，它代表着切片头结构体的零值：
+```go
+sliceHeader{
+    Length:        0,
+    Capacity:      0,
+    ZerothElement: nil,
+}
+```
+或者是：
+```go
+sliceHeader{}
+```
+注意此时指针的值也是 `nil` 。而由 `array[0:0]` 创建的切片长度为零，但是它的指针值不是 `nil` ，因为它确实指向了一个存在的数组，所以它不是一个 `nil` 切片。
+
+要知道，一个空的切片（假设它的容量不为0）是可以扩充的，但是一个 `nil` 切片由于没有可以填充元素的底层数组，所以是无法扩充的。
+
+`nil` 可以通过重分配数组的方式来追加元素，正如上一节所讲的。
+
+## Strings
+
+这一节用于简短的介绍一下 `Go` 语言中在切片背景下的字符串。
+
+字符串很简单：它是只读的字节切片，外加一点来自语言的额外的语法支持。
+
+因为字符串是只读的，所以它们并不需要容量（你不能扩充他们），但是大多数情况下你可以把它们视为只读的字节切片。
+
+我们可以通过索引访问单个字节：
+```go
+slash := "/usr/ken"[0] // yields the byte value '/'.
+```
+可以对字符串进行切片来获取子串：
+```go
+usr := "/usr/ken"[0:4] // yields the string "/usr"
+```
+当我们对字符串进行切片时，幕后发生了什么你应该已经了解了。
+
+我们也可以用一个普通的字节切片来创建字符串：
+```go
+str := string(slice)
+```
+或者反过来操作：
+```go
+slice := []byte(usr)
+```
+字符串的底层数组对于我们来说是不可见的，除了通过字符串本身，我们无法访问到它的内容。也就是说在进行上面的转换时，必须复制数组，不过 `Go` 语言帮我们处理了。完成转换之后，对于字节切片底层数组的修改并不会影响对应的字符串，因为他们指向的是不同的底层数组。
+
+这种类切片的字符串设计使得创建子字符串非常容易，我们只需要创建一个字符串头即可，由于字符串是只读的，因此子串可以和原字符串安全的共享相同的底层数组。
+
+这篇[博客](https://blog.golang.org/strings)更加深入的介绍了有关字符串的内容。
+
+## Conclusion
+
+了解切片的工作原理有助于了解切片的实现方式。一个关键的数据结构，即切片头结构体，它与切片变量相关联，并且它描述了底层数组的一部分。当我们传递切片值时，将传递切片头结构体的副本，但它始终指向同一个底层数组。
+
+一旦你了解了切片的工作原理，你会发现切片不仅便于使用，而且非常强大，特别是在多个内置函数的加持下。
+
+## More reading
+
+除了前面提到的["Slice Tricks"](https://github.com/golang/go/wiki/SliceTricks)，[Go Slices](https://blog.go-zh.org/go-slices-usage-and-internals)这篇博客用图表描述了内存布局的细节。Russ Cox写的[Go Data Structures](https://research.swtch.com/godata)这篇文章包括了对切片的讨论以及其他 `Go` 语言内置的数据结构。
+
+还有很多可用的资料，但是最好的学习方法还是在coding中去使用它们。
