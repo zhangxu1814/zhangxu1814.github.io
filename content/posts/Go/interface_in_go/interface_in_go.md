@@ -111,3 +111,4 @@ func (i Binary) Get() uint64 {
 
 ## 接口值
 
+{{<image src="/images/image1.png">}}
