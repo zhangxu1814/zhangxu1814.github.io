@@ -1,0 +1,646 @@
+<!doctype html><html lang=zh-cn><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><meta name=robots content="noodp"><meta http-equiv=x-ua-compatible content="IE=edge, chrome=1"><title>slice in Go - SSSSSSS</title><meta name=Description content="本文翻译自https://blog.golang.org/slices"><meta property="og:title" content="slice in Go"><meta property="og:description" content="本文翻译自https://blog.golang.org/slices"><meta property="og:type" content="article"><meta property="og:url" content="https://zhangxu1814.github.io/slices_in_go/"><meta property="og:image" content="https://zhangxu1814.github.io/logo.png"><meta property="article:section" content="posts"><meta property="article:published_time" content="2021-05-05T19:18:25+08:00"><meta property="article:modified_time" content="2021-05-05T19:18:25+08:00"><meta name=twitter:card content="summary_large_image"><meta name=twitter:image content="https://zhangxu1814.github.io/logo.png"><meta name=twitter:title content="slice in Go"><meta name=twitter:description content="本文翻译自https://blog.golang.org/slices"><meta name=application-name content="zhangxu1814"><meta name=apple-mobile-web-app-title content="zhangxu1814"><meta name=theme-color content="#ffffff"><meta name=msapplication-TileColor content="#da532c"><link rel="shortcut icon" type=image/x-icon href=/favicon.ico><link rel=icon type=image/png sizes=32x32 href=/favicon-32x32.png><link rel=icon type=image/png sizes=16x16 href=/favicon-16x16.png><link rel=apple-touch-icon sizes=180x180 href=/apple-touch-icon.png><link rel=mask-icon href=/safari-pinned-tab.svg color=#5bbad5><link rel=manifest href=/site.webmanifest><link rel=canonical href=https://zhangxu1814.github.io/slices_in_go/><link rel=next href=https://zhangxu1814.github.io/burrow-evm/><link rel=stylesheet href=/lib/normalize/normalize.min.css><link rel=stylesheet href=/css/style.min.css><link rel=stylesheet href=/lib/fontawesome-free/all.min.css><link rel=stylesheet href=/lib/animate/animate.min.css><script type=application/ld+json>{"@context":"http://schema.org","@type":"BlogPosting","headline":"slice in Go","inLanguage":"zh-CN","mainEntityOfPage":{"@type":"WebPage","@id":"https:\/\/zhangxu1814.github.io\/slices_in_go\/"},"genre":"posts","keywords":"Go, 切片","wordcount":7023,"url":"https:\/\/zhangxu1814.github.io\/slices_in_go\/","datePublished":"2021-05-05T19:18:25+08:00","dateModified":"2021-05-05T19:18:25+08:00","publisher":{"@type":"Organization","name":""},"author":{"@type":"Person","name":"zhangxu1814"},"description":"本文翻译自https://blog.golang.org/slices"}</script></head><body header-desktop=fixed header-mobile=auto><script type=text/javascript>(window.localStorage&&localStorage.getItem('theme')?localStorage.getItem('theme')==='dark':'auto'==='auto'?window.matchMedia('(prefers-color-scheme: dark)').matches:'auto'==='dark')&&document.body.setAttribute('theme','dark')</script><div id=mask></div><div class=wrapper><header class=desktop id=header-desktop><div class=header-wrapper><a href=https://github.com/zhangxu1814 class=github-corner target=_blank title="Follow me on GitHub" aria-label="Follow me on GitHub"><svg width="3.5rem" height="3.5rem" viewBox="0 0 250 250" style="fill:#70b7fd;color:#fff;position:absolute;top:0;border:0;left:0;transform:scale(-1,1)" aria-hidden="true"><path d="M0 0 115 115h15l12 27L250 250V0z"/><path d="M128.3 109C113.8 99.7 119 89.6 119 89.6 122 82.7 120.5 78.6 120.5 78.6 119.2 72 123.4 76.3 123.4 76.3 127.3 80.9 125.5 87.3 125.5 87.3 122.9 97.6 130.6 101.9 134.4 103.2" fill="currentcolor" style="transform-origin:130px 106px" class="octo-arm"/><path d="M115 115C114.9 115.1 118.7 116.5 119.8 115.4l13.9-13.8C136.9 99.2 139.9 98.4 142.2 98.6 133.8 88 127.5 74.4 143.8 58 148.5 53.4 154 51.2 159.7 51 160.3 49.4 163.2 43.6 171.4 40.1 171.4 40.1 176.1 42.5 178.8 56.2 183.1 58.6 187.2 61.8 190.9 65.4 194.5 69 197.7 73.2 200.1 77.6 213.8 80.2 216.3 84.9 216.3 84.9 212.7 93.1 206.9 96 205.4 96.6 205.1 102.4 203 107.8 198.3 112.5 181.9 128.9 168.3 122.5 157.7 114.1 157.9 116.9 156.7 120.9 152.7 124.9L141 136.5C139.8 137.7 141.6 141.9 141.8 141.8z" fill="currentcolor" class="octo-body"/></svg></a><div class=header-title><a href=/ title=SSSSSSS>zhangxu1814</a></div><div class=menu><div class=menu-inner><a class=menu-item href=/posts/>文章 </a><a class=menu-item href=/tags/>标签 </a><a class=menu-item href=/categories/>分类 </a><a class=menu-item href=/about/>关于 </a><a class=menu-item href=https://github.com/zhangxu1814 title=Github rel="noopener noreffer" target=_blank><i class="fab fa-github fa-fw"></i> </a><span class="menu-item delimiter"></span><span class="menu-item search" id=search-desktop><input type=text placeholder=搜索文章标题或内容... id=search-input-desktop>
+<a href=javascript:void(0); class="search-button search-toggle" id=search-toggle-desktop title=搜索><i class="fas fa-search fa-fw"></i></a>
+<a href=javascript:void(0); class="search-button search-clear" id=search-clear-desktop title=清空><i class="fas fa-times-circle fa-fw"></i></a>
+<span class="search-button search-loading" id=search-loading-desktop><i class="fas fa-spinner fa-fw fa-spin"></i></span>
+</span><a href=javascript:void(0); class="menu-item theme-switch" title=切换主题><i class="fas fa-adjust fa-fw"></i></a></div></div></div></header><header class=mobile id=header-mobile><div class=header-container><div class=header-wrapper><div class=header-title><a href=/ title=SSSSSSS>zhangxu1814</a></div><div class=menu-toggle id=menu-toggle-mobile><span></span><span></span><span></span></div></div><div class=menu id=menu-mobile><div class=search-wrapper><div class="search mobile" id=search-mobile><input type=text placeholder=搜索文章标题或内容... id=search-input-mobile>
+<a href=javascript:void(0); class="search-button search-toggle" id=search-toggle-mobile title=搜索><i class="fas fa-search fa-fw"></i></a>
+<a href=javascript:void(0); class="search-button search-clear" id=search-clear-mobile title=清空><i class="fas fa-times-circle fa-fw"></i></a>
+<span class="search-button search-loading" id=search-loading-mobile><i class="fas fa-spinner fa-fw fa-spin"></i></span></div><a href=javascript:void(0); class=search-cancel id=search-cancel-mobile>取消</a></div><a class=menu-item href=/posts/ title>文章</a><a class=menu-item href=/tags/ title>标签</a><a class=menu-item href=/categories/ title>分类</a><a class=menu-item href=/about/ title>关于</a><a class=menu-item href=https://github.com/zhangxu1814 title=Github rel="noopener noreffer" target=_blank><i class="fab fa-github fa-fw"></i></a><a href=javascript:void(0); class="menu-item theme-switch" title=切换主题>
+<i class="fas fa-adjust fa-fw"></i></a></div></div></header><div class="search-dropdown desktop"><div id=search-dropdown-desktop></div></div><div class="search-dropdown mobile"><div id=search-dropdown-mobile></div></div><main class=main><div class=container><div class=toc id=toc-auto><h2 class=toc-title>目录</h2><div class=toc-content id=toc-content-auto></div></div><article class="page single"><h1 class="single-title animated flipInX">slice in Go</h1><div class=post-meta><div class=post-meta-line><span class=post-author><a href=https://zhangxu1814.github.io title=Author target=_blank rel="noopener noreffer author" class=author><i class="fas fa-user-circle fa-fw"></i>zhangxu1814</a></span>&nbsp;<span class=post-category>收录于 <a href=/categories/go/><i class="far fa-folder fa-fw"></i>Go</a></span></div><div class=post-meta-line><i class="far fa-calendar-alt fa-fw"></i>&nbsp;<time datetime=2021-05-05>2021-05-05</time>&nbsp;<i class="fas fa-pencil-alt fa-fw"></i>&nbsp;约 7023 字&nbsp;
+<i class="far fa-clock fa-fw"></i>&nbsp;预计阅读 15 分钟&nbsp;</div></div><div class="details toc" id=toc-static kept><div class="details-summary toc-title"><span>目录</span>
+<span><i class="details-icon fas fa-angle-right"></i></span></div><div class="details-content toc-content" id=toc-content-static><nav id=TableOfContents><ul><li><a href=#arrays>Arrays</a></li><li><a href=#slices-the-slice-header>Slices: The slice header</a></li><li><a href=#passing-slices-to-functions>Passing slices to functions</a></li><li><a href=#pointers-to-slices-method-receivers>Pointers to slices: Method receivers</a></li><li><a href=#capacity>Capacity</a></li><li><a href=#make>Make</a></li><li><a href=#copy>Copy</a></li><li><a href=#append-an-example>Append: An example</a></li><li><a href=#append-the-build-in-function>Append: The build-in function</a></li><li><a href=#nil>Nil</a></li><li><a href=#strings>Strings</a></li><li><a href=#conclusion>Conclusion</a></li><li><a href=#more-reading>More reading</a></li></ul></nav></div></div><div class=content id=content><div class="details admonition note open"><div class="details-summary admonition-title"><i class="icon fas fa-pencil-alt fa-fw"></i>注意<i class="details-icon fas fa-angle-right fa-fw"></i></div><div class=details-content><div class=admonition-content>本文翻译自<a href=https://blog.golang.org/slices target=_blank rel="noopener noreffer">https://blog.golang.org/slices</a></div></div></div><p>过程式编程语言最常见的特性之一便是数组的概念。数组看起来很简单，但是当把它加进一门语言里时，需要考虑很多问题，例如：</p><ul><li>固定大小 or 可变大小？</li><li>数组的大小要作为数组类型的一部分吗？</li><li>多维数组看起来是什么样的？</li><li>空数组有意义吗？</li><li>&mldr;</li></ul><p>数组是语言的一个特性还是其设计的关键部分将取决于这些问题的答案。</p><p>在go的早期开发过程中，花了一年的时间来决定这些问题的答案。其中关键的一步便是引入了切片，它构建在固定大小的数组上，提供了灵活、可扩展的数据结构。然而，直到今天，受到来自于其他编程语言的经验的影响，刚接触go的程序员往往会掉进切片的工作方式这个大坑里。</p><p>这篇文章将会解释 <code>slice</code> 以及内置函数 <code>append</code> 是如何工作的，以及这样设计的原因。</p><h2 id=arrays>Arrays</h2><p>数组是go语言中一个重要的构建模块，但是如建筑物的地基一样，它通常隐藏在更多的可见组件之下。在讨论切片的其他更有趣，更强大，更突出的概念之前，我们必须先简要的讨论一下数组。</p><p>数组在go语言中并不常见，因为数组的大小是它的类型的一部分。也就是说，我们在声明一个数组时，必须指定它的大小，这限制了数组的表达能力。</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre class=chroma><code><span class=lnt>1
+</span></code></pre></td><td class=lntd><pre class=chroma><code class=language-go data-lang=go><span class=kd>var</span> <span class=nx>buffer</span> <span class=p>[</span><span class=mi>256</span><span class=p>]</span><span class=kt>byte</span>
+</code></pre></td></tr></table></div></div><p>上面的表达式声明了一个变量 <code>buffer</code> ，它包含256个字节。 <code>buffer</code> 的类型声明包含了它的大小，[256]byte。而一个包含512个字节的数组变量类型是[512]byte。</p><p>包含在一个数组中的数据在内存中看起来是这样的：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre class=chroma><code><span class=lnt>1
+</span></code></pre></td><td class=lntd><pre class=chroma><code class=language-fallback data-lang=fallback>buffer: byte byte byte ...... byte byte byte
+</code></pre></td></tr></table></div></div><p>我们可以通过索引来访问 <code>buffer</code> 中的元素，例如 <code>buffer[0]</code> ， <code>buffer[1]</code> ，直到 <code>buffer[255]</code> 。越界访问buffer将导致程序崩溃。</p><p>内置函数 <code>len()</code> 可以返回数组或者切片或者其他某些数据类型中包含的元素的数量， <code>len(buffer)</code> 返回固定值256</p><p>数组有它自己的用处，比如数组很好的表示了转换矩阵，但是在go语言中他们更多的被用来为切片保留存储空间</p><h2 id=slices-the-slice-header>Slices: The slice header</h2><p>想要更好的使用切片，我们必须明白切片是什么以及切片可以做什么</p><p>切片是一种数据结构，它描述了一个数组中的一段连续的数据，数组与切片并不占用同一块存储空间。一个切片并不是一个数组。切片描述了数组的一个片段。</p><p>继续使用上一节中的数组变量 <code>buffer</code> ，我们可以通过切分（slicing）这个数组来创造一个描述 <code>buffer</code> 中的第100-150个元素（不包括第150个元素）的切片：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre class=chroma><code><span class=lnt>1
+</span></code></pre></td><td class=lntd><pre class=chroma><code class=language-go data-lang=go><span class=kd>var</span> <span class=nx>slice</span> <span class=p>[]</span><span class=kt>byte</span> <span class=p>=</span> <span class=nx>buffer</span><span class=p>[</span><span class=mi>100</span><span class=p>:</span><span class=mi>150</span><span class=p>]</span>
+</code></pre></td></tr></table></div></div><p>变量 <code>slice</code> 的类型为 <code>[]byte</code> ，读作"slice of bytes"。 <code>slice</code> 通过切分数组 <code>buffer</code> 的第100到第150个元素来完成初始化。更常用的语法是去掉类型部分，根据初始化表达式设置类型：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre class=chroma><code><span class=lnt>1
+</span></code></pre></td><td class=lntd><pre class=chroma><code class=language-go data-lang=go><span class=kd>var</span> <span class=nx>slice</span> <span class=p>=</span> <span class=nx>buffer</span><span class=p>[</span><span class=mi>100</span><span class=p>:</span><span class=mi>150</span><span class=p>]</span>
+</code></pre></td></tr></table></div></div><p>在函数内部，我们可以使用短变量声明：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre class=chroma><code><span class=lnt>1
+</span></code></pre></td><td class=lntd><pre class=chroma><code class=language-go data-lang=go><span class=nx>slice</span> <span class=o>:=</span> <span class=nx>buffer</span><span class=p>[</span><span class=mi>100</span><span class=p>:</span><span class=mi>150</span><span class=p>]</span>
+</code></pre></td></tr></table></div></div><p>注意只能在函数内部使用短变量声明，因为函数外的每条语句都必须以关键字开始（var，func等）。</p><p>现在可以把切片看作一个拥有两个元素的数据结构：长度以及指向数组中某个元素的指针。可以把切片想象成这样的一个结构体：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span><span class=lnt>5
+</span><span class=lnt>6
+</span><span class=lnt>7
+</span><span class=lnt>8
+</span><span class=lnt>9
+</span></code></pre></td><td class=lntd><pre class=chroma><code class=language-go data-lang=go><span class=kd>type</span> <span class=nx>sliceHeader</span> <span class=kd>struct</span> <span class=p>{</span>
+    <span class=nx>Length</span>        <span class=kt>int</span>
+    <span class=nx>ZerothElement</span> <span class=o>*</span><span class=kt>byte</span>
+<span class=p>}</span>
+
+<span class=nx>slice</span> <span class=o>:=</span> <span class=nx>sliceHeader</span><span class=p>{</span>
+    <span class=nx>Length</span><span class=p>:</span>        <span class=mi>50</span><span class=p>,</span>
+    <span class=nx>ZerothElement</span><span class=p>:</span> <span class=o>&amp;</span><span class=nx>buffer</span><span class=p>[</span><span class=mi>100</span><span class=p>],</span>
+<span class=p>}</span>
+</code></pre></td></tr></table></div></div><p>当然，这只是一个为了便于理解做出的假设示例。尽管上面这段代码表明 <code>sliceHeader</code> 类型对程序猿是不可见的，并且指针的类型取决于它所指向的元素的类型，但是这给了我们关于切片机制的大体思路。</p><p>目前为止我们已经在数组上进行了切片操作，但是我们还可以在切片上进行切片操作，就像这样：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre class=chroma><code><span class=lnt>1
+</span></code></pre></td><td class=lntd><pre class=chroma><code class=language-go data-lang=go><span class=nx>slice2</span> <span class=o>:=</span> <span class=nx>slice</span><span class=p>[</span><span class=mi>5</span><span class=p>:</span><span class=mi>10</span><span class=p>]</span>
+</code></pre></td></tr></table></div></div><p>就像之前的切片操作一样，上面的语句创建了一个新的切片， <code>slice2</code> 包括了 <code>slice</code> 中的第5-9（不含）个元素，也就是数组 <code>buffer</code> 中的第105-109（不含）个元素。 <code>slice2</code> 底层的 <code>sliceHeader</code> 看起来是这样的：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span></code></pre></td><td class=lntd><pre class=chroma><code class=language-go data-lang=go><span class=nx>slice2</span> <span class=o>:=</span> <span class=nx>sliceHeader</span><span class=p>{</span>
+    <span class=nx>Length</span><span class=p>:</span>        <span class=mi>5</span><span class=p>,</span>
+    <span class=nx>ZerothElement</span><span class=p>:</span> <span class=o>&amp;</span><span class=nx>buffer</span><span class=p>[</span><span class=mi>105</span><span class=p>],</span>
+<span class=p>}</span>
+</code></pre></td></tr></table></div></div><p>注意此时 <code>slice2</code> 的 <code>sliceHeader</code> 仍然指向相同的底层数组，也就是 <code>buffer</code> 。</p><p>我们也可以重切片（<em>reslice</em>），也就是对一个切片进行切片操作，并将结果存储在原始的切片结构中：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre class=chroma><code><span class=lnt>1
+</span></code></pre></td><td class=lntd><pre class=chroma><code class=language-go data-lang=go><span class=nx>slice</span> <span class=p>=</span> <span class=nx>slice</span><span class=p>[</span><span class=mi>5</span><span class=p>:</span><span class=mi>10</span><span class=p>]</span>
+</code></pre></td></tr></table></div></div><p>此时 <code>slice</code> 的 <code>sliceHeader</code> 和上面的 <code>slice2</code> 的 <code>sliceHeader</code> 看起来是一样的。重切片操作应用的更多，例如截断一个切片。下面这条语句删除了切片的第一个和最后一个元素：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre class=chroma><code><span class=lnt>1
+</span></code></pre></td><td class=lntd><pre class=chroma><code class=language-go data-lang=go><span class=nx>slice</span> <span class=p>=</span> <span class=nx>slice</span><span class=p>[</span><span class=mi>1</span><span class=p>:</span><span class=nb>len</span><span class=p>(</span><span class=nx>slice</span><span class=p>)</span><span class=o>-</span><span class=mi>1</span><span class=p>]</span>
+</code></pre></td></tr></table></div></div><p>你可能经常会听到老手程序猿谈论关于“切片头”的问题，因为那确实是存储在切片变量中的内容，也就是说，一个切片实际上就是上面所描述的一个切片头结构体。例如，当你调用一个以切片作为参数的函数时，比如<a href=https://golang.org/pkg/bytes/#IndexRune target=_blank rel="noopener noreffer">bytes.IndexRune</a>，就会给这个函数传递一个切片头结构体。在下面这条语句中，</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre class=chroma><code><span class=lnt>1
+</span></code></pre></td><td class=lntd><pre class=chroma><code class=language-go data-lang=go><span class=nx>slashPos</span> <span class=o>:=</span> <span class=nx>bytes</span><span class=p>.</span><span class=nf>IndexRune</span><span class=p>(</span><span class=nx>slice</span><span class=p>,</span> <span class=sc>&#39;/&#39;</span><span class=p>)</span>
+</code></pre></td></tr></table></div></div><p>传给 <code>IndexRune</code> 的参数 <code>slice</code> ，其实是一个切片头结构体</p><p>切片头结构体中还有一个元素，我们将会在下面讨论，但是首先我们先来看一下当我们使用切片时，切片头的存在意味着什么。</p><h2 id=passing-slices-to-functions>Passing slices to functions</h2><p>即使切片包含一个指针，切片本身也是一个值，理解这点很重要。实际上，它是一个<strong>结构体值</strong>，包含一个指针和一个长度值。它<strong>不是</strong>一个指向结构体的指针。</p><p>👆上面这点很重要👆</p><p>上一个例子中当我们调用 <code>IndexRune</code> 时，它实际上接收的是一个切片头结构体的<strong>副本</strong>。这种行为有很重大的影响。</p><p>考虑这样一个简单的函数：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span><span class=lnt>5
+</span></code></pre></td><td class=lntd><pre class=chroma><code class=language-go data-lang=go><span class=kd>func</span> <span class=nf>AddOneToEachElement</span><span class=p>(</span><span class=nx>slice</span> <span class=p>[]</span><span class=kt>byte</span><span class=p>)</span> <span class=p>{</span>
+    <span class=k>for</span> <span class=nx>i</span> <span class=o>:=</span> <span class=k>range</span> <span class=nx>slice</span> <span class=p>{</span>
+        <span class=nx>slice</span><span class=p>[</span><span class=nx>i</span><span class=p>]</span><span class=o>++</span>
+    <span class=p>}</span>
+<span class=p>}</span>
+</code></pre></td></tr></table></div></div><p>就像他的函数名一样，这个函数会遍历整个切片，并将切片中的每个元素加一。</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span><span class=lnt>5
+</span><span class=lnt>6
+</span><span class=lnt>7
+</span><span class=lnt>8
+</span><span class=lnt>9
+</span></code></pre></td><td class=lntd><pre class=chroma><code class=language-go data-lang=go><span class=kd>func</span> <span class=nf>main</span><span class=p>()</span> <span class=p>{</span>
+    <span class=nx>slice</span> <span class=o>:=</span> <span class=nx>buffer</span><span class=p>[</span><span class=mi>10</span><span class=p>:</span><span class=mi>20</span><span class=p>]</span>
+    <span class=k>for</span> <span class=nx>i</span> <span class=o>:=</span> <span class=mi>0</span><span class=p>;</span> <span class=nx>i</span> <span class=p>&lt;</span> <span class=nb>len</span><span class=p>(</span><span class=nx>slice</span><span class=p>);</span> <span class=nx>i</span><span class=o>++</span> <span class=p>{</span>
+        <span class=nx>slice</span><span class=p>[</span><span class=nx>i</span><span class=p>]</span> <span class=p>=</span> <span class=nb>byte</span><span class=p>(</span><span class=nx>i</span><span class=p>)</span>
+    <span class=p>}</span>
+    <span class=nx>fmt</span><span class=p>.</span><span class=nf>Println</span><span class=p>(</span><span class=s>&#34;before&#34;</span><span class=p>,</span> <span class=nx>slice</span><span class=p>)</span>
+    <span class=nf>AddOneToEachElement</span><span class=p>(</span><span class=nx>slice</span><span class=p>)</span>
+    <span class=nx>fmt</span><span class=p>.</span><span class=nf>Println</span><span class=p>(</span><span class=s>&#34;after&#34;</span><span class=p>,</span> <span class=nx>slice</span><span class=p>)</span>
+<span class=p>}</span>
+</code></pre></td></tr></table></div></div><p>运行结果为：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span></code></pre></td><td class=lntd><pre class=chroma><code class=language-go data-lang=go><span class=nx>before</span> <span class=p>[</span><span class=mi>0</span> <span class=mi>1</span> <span class=mi>2</span> <span class=mi>3</span> <span class=mi>4</span> <span class=mi>5</span> <span class=mi>6</span> <span class=mi>7</span> <span class=mi>8</span> <span class=mi>9</span><span class=p>]</span>
+<span class=nx>after</span> <span class=p>[</span><span class=mi>1</span> <span class=mi>2</span> <span class=mi>3</span> <span class=mi>4</span> <span class=mi>5</span> <span class=mi>6</span> <span class=mi>7</span> <span class=mi>8</span> <span class=mi>9</span> <span class=mi>10</span><span class=p>]</span>
+</code></pre></td></tr></table></div></div><p>尽管切片是以切片头结构体<strong>值传递</strong>的方式传入的，但是切片头结构体包含了一个指向底层数组的指针，所以不管是原始的切片还是作为参数传递的切片副本都包含了指向相同的底层数组的指针。因此，当上面的函数返回时，我们可以通过原始切片观察到元素的改动。</p><p>下面这个例子展示了传递给函数的参数是副本：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span></code></pre></td><td class=lntd><pre class=chroma><code class=language-go data-lang=go><span class=kd>func</span> <span class=nf>SubtractOneFromLength</span><span class=p>(</span><span class=nx>slice</span> <span class=p>[]</span><span class=kt>byte</span><span class=p>)</span> <span class=p>[]</span><span class=kt>byte</span> <span class=p>{</span>
+    <span class=nx>slice</span> <span class=p>=</span> <span class=nx>slice</span><span class=p>[</span><span class=mi>0</span> <span class=p>:</span> <span class=nb>len</span><span class=p>(</span><span class=nx>slice</span><span class=p>)</span><span class=o>-</span><span class=mi>1</span><span class=p>]</span>
+    <span class=k>return</span> <span class=nx>slice</span>
+<span class=p>}</span>
+
+<span class=kd>func</span> <span class=nf>main</span><span class=p>()</span> <span class=p>{</span>
+    <span class=nx>fmt</span><span class=p>.</span><span class=nf>Println</span><span class=p>(</span><span class=s>&#34;Before: len(slice) =&#34;</span><span class=p>,</span> <span class=nb>len</span><span class=p>(</span><span class=nx>slice</span><span class=p>))</span>
+    <span class=nx>newSlice</span> <span class=o>:=</span> <span class=nf>SubtractOneFromLength</span><span class=p>(</span><span class=nx>slice</span><span class=p>)</span>
+    <span class=nx>fmt</span><span class=p>.</span><span class=nf>Println</span><span class=p>(</span><span class=s>&#34;After:  len(slice) =&#34;</span><span class=p>,</span> <span class=nb>len</span><span class=p>(</span><span class=nx>slice</span><span class=p>))</span>
+    <span class=nx>fmt</span><span class=p>.</span><span class=nf>Println</span><span class=p>(</span><span class=s>&#34;After:  len(newSlice) =&#34;</span><span class=p>,</span> <span class=nb>len</span><span class=p>(</span><span class=nx>newSlice</span><span class=p>))</span>
+<span class=p>}</span>
+</code></pre></td></tr></table></div></div><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span></code></pre></td><td class=lntd><pre class=chroma><code class=language-go data-lang=go><span class=nx>Before</span><span class=p>:</span> <span class=nb>len</span><span class=p>(</span><span class=nx>slice</span><span class=p>)</span> <span class=p>=</span> <span class=mi>50</span>
+<span class=nx>After</span><span class=p>:</span>  <span class=nb>len</span><span class=p>(</span><span class=nx>slice</span><span class=p>)</span> <span class=p>=</span> <span class=mi>50</span>
+<span class=nx>After</span><span class=p>:</span>  <span class=nb>len</span><span class=p>(</span><span class=nx>newSlice</span><span class=p>)</span> <span class=p>=</span> <span class=mi>49</span>
+</code></pre></td></tr></table></div></div><p>我们可以看到当切片作为参数传入时，函数可以修改它包含的内容，也就是它指向的底层数组中的值，但是无法修改它的切片头结构体中元素的值。存储在 <code>slice</code> 中的长度值并没有被修改，上面的函数只是修改了传入的切片头结构体的<strong>副本</strong>，而不是其本体。这样如果我们想写一个函数修改切片头的话，我们就需要将修改后的副本作为结果返回。在上面的例子中， <code>slice</code> 并没有改变，但是返回值 <code>newSlice</code> 的长度被修改了。</p><h2 id=pointers-to-slices-method-receivers>Pointers to slices: Method receivers</h2><p>另一种在函数中修改切片头的方法是将切片的指针作为参数传入。下面是上一个例子的变体：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span></code></pre></td><td class=lntd><pre class=chroma><code class=language-go data-lang=go><span class=kd>func</span> <span class=nf>PtrSubtractOneFromLength</span><span class=p>(</span><span class=nx>slicePtr</span> <span class=o>*</span><span class=p>[]</span><span class=kt>byte</span><span class=p>)</span> <span class=p>{</span>
+    <span class=nx>slice</span> <span class=o>:=</span> <span class=o>*</span><span class=nx>slicePtr</span>
+    <span class=o>*</span><span class=nx>slicePtr</span> <span class=p>=</span> <span class=nx>slice</span><span class=p>[</span><span class=mi>0</span> <span class=p>:</span> <span class=nb>len</span><span class=p>(</span><span class=nx>slice</span><span class=p>)</span><span class=o>-</span><span class=mi>1</span><span class=p>]</span>
+<span class=p>}</span>
+
+<span class=kd>func</span> <span class=nf>main</span><span class=p>()</span> <span class=p>{</span>
+    <span class=nx>fmt</span><span class=p>.</span><span class=nf>Println</span><span class=p>(</span><span class=s>&#34;Before: len(slice) =&#34;</span><span class=p>,</span> <span class=nb>len</span><span class=p>(</span><span class=nx>slice</span><span class=p>))</span>
+    <span class=nf>PtrSubtractOneFromLength</span><span class=p>(</span><span class=o>&amp;</span><span class=nx>slice</span><span class=p>)</span>
+    <span class=nx>fmt</span><span class=p>.</span><span class=nf>Println</span><span class=p>(</span><span class=s>&#34;After:  len(slice) =&#34;</span><span class=p>,</span> <span class=nb>len</span><span class=p>(</span><span class=nx>slice</span><span class=p>))</span>
+<span class=p>}</span>
+</code></pre></td></tr></table></div></div><p>它的运行结果为：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span></code></pre></td><td class=lntd><pre class=chroma><code class=language-go data-lang=go><span class=nx>Before</span><span class=p>:</span> <span class=nb>len</span><span class=p>(</span><span class=nx>slice</span><span class=p>)</span> <span class=p>=</span> <span class=mi>50</span>
+<span class=nx>After</span><span class=p>:</span>  <span class=nb>len</span><span class=p>(</span><span class=nx>slice</span><span class=p>)</span> <span class=p>=</span> <span class=mi>49</span>
+</code></pre></td></tr></table></div></div><p>这个例子看起来很麻烦，需要处理间接引用（例子里面引入了一个临时变量来帮助处理），但是有一种常见的情况下你可以看到切片指针，即，通常使用指针作为修改切片的方法的接收者。</p><p>我们假设一个切片，这个切片拥有一个在最后一个斜杠处截断它的方法。我们可以这样写：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span></code></pre></td><td class=lntd><pre class=chroma><code class=language-go data-lang=go><span class=kd>type</span> <span class=nx>path</span> <span class=p>[]</span><span class=kt>byte</span>
+
+<span class=kd>func</span> <span class=p>(</span><span class=nx>p</span> <span class=o>*</span><span class=nx>path</span><span class=p>)</span> <span class=nf>TruncateAtFinalSlash</span><span class=p>()</span> <span class=p>{</span>
+    <span class=nx>i</span> <span class=o>:=</span> <span class=nx>bytes</span><span class=p>.</span><span class=nf>LastIndex</span><span class=p>(</span><span class=o>*</span><span class=nx>p</span><span class=p>,</span> <span class=p>[]</span><span class=nb>byte</span><span class=p>(</span><span class=s>&#34;/&#34;</span><span class=p>))</span>
+    <span class=k>if</span> <span class=nx>i</span> <span class=o>&gt;=</span> <span class=mi>0</span> <span class=p>{</span>
+        <span class=o>*</span><span class=nx>p</span> <span class=p>=</span> <span class=p>(</span><span class=o>*</span><span class=nx>p</span><span class=p>)[</span><span class=mi>0</span><span class=p>:</span><span class=nx>i</span><span class=p>]</span>
+    <span class=p>}</span>
+<span class=p>}</span>
+
+<span class=kd>func</span> <span class=nf>main</span><span class=p>()</span> <span class=p>{</span>
+    <span class=nx>pathName</span> <span class=o>:=</span> <span class=nf>path</span><span class=p>(</span><span class=s>&#34;/usr/bin/tso&#34;</span><span class=p>)</span> <span class=c1>// Conversion from string to path.
+</span><span class=c1></span>    <span class=nx>pathName</span><span class=p>.</span><span class=nf>TruncateAtFinalSlash</span><span class=p>()</span>
+    <span class=nx>fmt</span><span class=p>.</span><span class=nf>Printf</span><span class=p>(</span><span class=s>&#34;%s\n&#34;</span><span class=p>,</span> <span class=nx>pathName</span><span class=p>)</span>
+<span class=p>}</span>
+</code></pre></td></tr></table></div></div><p>其结果为：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre class=chroma><code><span class=lnt>1
+</span></code></pre></td><td class=lntd><pre class=chroma><code class=language-go data-lang=go><span class=o>/</span><span class=nx>usr</span><span class=o>/</span><span class=nx>bin</span>
+</code></pre></td></tr></table></div></div><p>如果我们将这个例子里的接收者类型由指针改为值呢？</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span></code></pre></td><td class=lntd><pre class=chroma><code class=language-go data-lang=go><span class=kd>type</span> <span class=nx>path</span> <span class=p>[]</span><span class=kt>byte</span>
+
+<span class=kd>func</span> <span class=p>(</span><span class=nx>p</span> <span class=nx>path</span><span class=p>)</span> <span class=nf>TruncateAtFinalSlash</span><span class=p>()</span> <span class=p>{</span>
+    <span class=nx>i</span> <span class=o>:=</span> <span class=nx>bytes</span><span class=p>.</span><span class=nf>LastIndex</span><span class=p>(</span><span class=nx>p</span><span class=p>,</span> <span class=p>[]</span><span class=nb>byte</span><span class=p>(</span><span class=s>&#34;/&#34;</span><span class=p>))</span>
+    <span class=k>if</span> <span class=nx>i</span> <span class=o>&gt;=</span> <span class=mi>0</span> <span class=p>{</span>
+        <span class=nx>p</span> <span class=p>=</span> <span class=p>(</span><span class=nx>p</span><span class=p>)[</span><span class=mi>0</span><span class=p>:</span><span class=nx>i</span><span class=p>]</span>
+    <span class=p>}</span>
+<span class=p>}</span>
+
+<span class=kd>func</span> <span class=nf>main</span><span class=p>()</span> <span class=p>{</span>
+    <span class=nx>pathName</span> <span class=o>:=</span> <span class=nf>path</span><span class=p>(</span><span class=s>&#34;/usr/bin/tso&#34;</span><span class=p>)</span> <span class=c1>// Conversion from string to path.
+</span><span class=c1></span>    <span class=nx>pathName</span><span class=p>.</span><span class=nf>TruncateAtFinalSlash</span><span class=p>()</span>
+    <span class=nx>fmt</span><span class=p>.</span><span class=nf>Printf</span><span class=p>(</span><span class=s>&#34;%s\n&#34;</span><span class=p>,</span> <span class=nx>pathName</span><span class=p>)</span>
+<span class=p>}</span>
+</code></pre></td></tr></table></div></div><p>此时运行结果为：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre class=chroma><code><span class=lnt>1
+</span></code></pre></td><td class=lntd><pre class=chroma><code class=language-go data-lang=go><span class=o>/</span><span class=nx>usr</span><span class=o>/</span><span class=nx>bin</span><span class=o>/</span><span class=nx>tso</span>
+</code></pre></td></tr></table></div></div><p>方法是一类带有特殊的接收者<strong>参数</strong>的函数，接收者也是个参数，因此，如果使用值接收者，方法会对原始值的副本进行操作。</p><p>但是，当接收者是切片类型时，那么不管是使用值接收者还是指针接收者，我们都可以对底层数组进行修改，因为二者都包含了指向同一个底层数组的指针</p><p>看这样一个例子，将 <code>path</code> 中的小写字母转换为大写字母：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span></code></pre></td><td class=lntd><pre class=chroma><code class=language-go data-lang=go><span class=kd>type</span> <span class=nx>path</span> <span class=p>[]</span><span class=kt>byte</span>
+
+<span class=kd>func</span> <span class=p>(</span><span class=nx>p</span> <span class=nx>path</span><span class=p>)</span> <span class=nf>ToUpper</span><span class=p>()</span> <span class=p>{</span>
+    <span class=k>for</span> <span class=nx>i</span><span class=p>,</span> <span class=nx>b</span> <span class=o>:=</span> <span class=k>range</span> <span class=nx>p</span> <span class=p>{</span>
+        <span class=k>if</span> <span class=sc>&#39;a&#39;</span> <span class=o>&lt;=</span> <span class=nx>b</span> <span class=o>&amp;&amp;</span> <span class=nx>b</span> <span class=o>&lt;=</span> <span class=sc>&#39;z&#39;</span> <span class=p>{</span>
+            <span class=nx>p</span><span class=p>[</span><span class=nx>i</span><span class=p>]</span> <span class=p>=</span> <span class=nx>b</span> <span class=o>+</span> <span class=sc>&#39;A&#39;</span> <span class=o>-</span> <span class=sc>&#39;a&#39;</span>
+        <span class=p>}</span>
+    <span class=p>}</span>
+<span class=p>}</span>
+
+<span class=kd>func</span> <span class=nf>main</span><span class=p>()</span> <span class=p>{</span>
+    <span class=nx>pathName</span> <span class=o>:=</span> <span class=nf>path</span><span class=p>(</span><span class=s>&#34;/usr/bin/tso&#34;</span><span class=p>)</span>
+    <span class=nx>pathName</span><span class=p>.</span><span class=nf>ToUpper</span><span class=p>()</span>
+    <span class=nx>fmt</span><span class=p>.</span><span class=nf>Printf</span><span class=p>(</span><span class=s>&#34;%s\n&#34;</span><span class=p>,</span> <span class=nx>pathName</span><span class=p>)</span>
+<span class=p>}</span>
+</code></pre></td></tr></table></div></div><p>使用值接收者，依然可以完成修改操作：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre class=chroma><code><span class=lnt>1
+</span></code></pre></td><td class=lntd><pre class=chroma><code class=language-go data-lang=go><span class=o>/</span><span class=nx>USR</span><span class=o>/</span><span class=nx>BIN</span><span class=o>/</span><span class=nx>TSO</span>
+</code></pre></td></tr></table></div></div><p>使用指针接收者也会得到同样的结果：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span><span class=lnt>5
+</span><span class=lnt>6
+</span><span class=lnt>7
+</span></code></pre></td><td class=lntd><pre class=chroma><code class=language-go data-lang=go><span class=kd>func</span> <span class=p>(</span><span class=nx>p</span> <span class=o>*</span><span class=nx>path</span><span class=p>)</span> <span class=nf>ToUpper</span><span class=p>()</span> <span class=p>{</span>
+    <span class=k>for</span> <span class=nx>i</span><span class=p>,</span> <span class=nx>b</span> <span class=o>:=</span> <span class=k>range</span> <span class=o>*</span><span class=nx>p</span> <span class=p>{</span>
+        <span class=k>if</span> <span class=sc>&#39;a&#39;</span> <span class=o>&lt;=</span> <span class=nx>b</span> <span class=o>&amp;&amp;</span> <span class=nx>b</span> <span class=o>&lt;=</span> <span class=sc>&#39;z&#39;</span> <span class=p>{</span>
+            <span class=p>(</span><span class=o>*</span><span class=nx>p</span><span class=p>)[</span><span class=nx>i</span><span class=p>]</span> <span class=p>=</span> <span class=nx>b</span> <span class=o>+</span> <span class=sc>&#39;A&#39;</span> <span class=o>-</span> <span class=sc>&#39;a&#39;</span>
+        <span class=p>}</span>
+    <span class=p>}</span>
+<span class=p>}</span>
+</code></pre></td></tr></table></div></div><h2 id=capacity>Capacity</h2><p>下面这个函数将它参数中的切片扩展了一个指定的元素：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span><span class=lnt>5
+</span><span class=lnt>6
+</span></code></pre></td><td class=lntd><pre class=chroma><code class=language-go data-lang=go><span class=kd>func</span> <span class=nf>Extend</span><span class=p>(</span><span class=nx>slice</span> <span class=p>[]</span><span class=kt>int</span><span class=p>,</span> <span class=nx>element</span> <span class=kt>int</span><span class=p>)</span> <span class=p>[]</span><span class=kt>int</span> <span class=p>{</span>
+    <span class=nx>n</span> <span class=o>:=</span> <span class=nb>len</span><span class=p>(</span><span class=nx>slice</span><span class=p>)</span>
+    <span class=nx>slice</span> <span class=p>=</span> <span class=nx>slice</span><span class=p>[</span><span class=mi>0</span> <span class=p>:</span> <span class=nx>n</span><span class=o>+</span><span class=mi>1</span><span class=p>]</span>
+    <span class=nx>slice</span><span class=p>[</span><span class=nx>n</span><span class=p>]</span> <span class=p>=</span> <span class=nx>element</span>
+    <span class=k>return</span> <span class=nx>slice</span>
+<span class=p>}</span>
+</code></pre></td></tr></table></div></div><p>（为什么需要返回修改后的切片呢？）现在我们运行它：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span><span class=lnt>5
+</span><span class=lnt>6
+</span><span class=lnt>7
+</span><span class=lnt>8
+</span></code></pre></td><td class=lntd><pre class=chroma><code class=language-go data-lang=go><span class=kd>func</span> <span class=nf>main</span><span class=p>()</span> <span class=p>{</span>
+    <span class=kd>var</span> <span class=nx>iBuffer</span> <span class=p>[</span><span class=mi>10</span><span class=p>]</span><span class=kt>int</span>
+    <span class=nx>slice</span> <span class=o>:=</span> <span class=nx>iBuffer</span><span class=p>[</span><span class=mi>0</span><span class=p>:</span><span class=mi>0</span><span class=p>]</span>
+    <span class=k>for</span> <span class=nx>i</span> <span class=o>:=</span> <span class=mi>0</span><span class=p>;</span> <span class=nx>i</span> <span class=p>&lt;</span> <span class=mi>20</span><span class=p>;</span> <span class=nx>i</span><span class=o>++</span> <span class=p>{</span>
+        <span class=nx>slice</span> <span class=p>=</span> <span class=nf>Extend</span><span class=p>(</span><span class=nx>slice</span><span class=p>,</span> <span class=nx>i</span><span class=p>)</span>
+        <span class=nx>fmt</span><span class=p>.</span><span class=nf>Println</span><span class=p>(</span><span class=nx>slice</span><span class=p>)</span>
+    <span class=p>}</span>
+<span class=p>}</span>
+</code></pre></td></tr></table></div></div><p>会得到这样的结果：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span></code></pre></td><td class=lntd><pre class=chroma><code class=language-fallback data-lang=fallback>[0]
+[0 1]
+[0 1 2]
+[0 1 2 3]
+[0 1 2 3 4]
+[0 1 2 3 4 5]
+[0 1 2 3 4 5 6]
+[0 1 2 3 4 5 6 7]
+[0 1 2 3 4 5 6 7 8]
+[0 1 2 3 4 5 6 7 8 9]
+panic: runtime error: slice bounds out of range [:11] with capacity 10
+
+goroutine 1 [running]:
+main.Extend(...)
+	/tmp/sandbox070713439/prog.go:16
+main.main()
+	/tmp/sandbox070713439/prog.go:25 +0x105
+</code></pre></td></tr></table></div></div><p>现在我们需要讨论一下之前提到的切片头结构体的第三个元素了：它的<strong>容量</strong>（capacity）。除了数组指针和长度，切片头结构体中还存储了切片的容量值：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span><span class=lnt>5
+</span></code></pre></td><td class=lntd><pre class=chroma><code class=language-go data-lang=go><span class=kd>type</span> <span class=nx>sliceHeader</span> <span class=kd>struct</span> <span class=p>{</span>
+    <span class=nx>Length</span>        <span class=kt>int</span>
+    <span class=nx>Capacity</span>      <span class=kt>int</span>
+    <span class=nx>ZerothElement</span> <span class=o>*</span><span class=kt>byte</span>
+<span class=p>}</span>
+</code></pre></td></tr></table></div></div><p>容量字段记录了底层数组实际拥有多少空间，它的值就是长度字段可以达到的最大值。当我们试图扩展切片超过它的容量值时，就会造成数组的越界访问，从而导致程序报错（就像上面这个例子一样）。</p><p>上面这个例子中我们创建了这样一个切片：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre class=chroma><code><span class=lnt>1
+</span></code></pre></td><td class=lntd><pre class=chroma><code class=language-go data-lang=go><span class=nx>slice</span> <span class=o>:=</span> <span class=nx>iBuffer</span><span class=p>[</span><span class=mi>0</span><span class=p>:</span><span class=mi>0</span><span class=p>]</span>
+</code></pre></td></tr></table></div></div><p>它的切片头结构体看起来是这样的：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span><span class=lnt>5
+</span></code></pre></td><td class=lntd><pre class=chroma><code class=language-go data-lang=go><span class=nx>slice</span> <span class=o>:=</span> <span class=nx>sliceHeader</span><span class=p>{</span>
+    <span class=nx>Length</span><span class=p>:</span>        <span class=mi>0</span><span class=p>,</span>
+    <span class=nx>Capacity</span><span class=p>:</span>      <span class=mi>10</span><span class=p>,</span>
+    <span class=nx>ZerothElement</span><span class=p>:</span> <span class=o>&amp;</span><span class=nx>iBuffer</span><span class=p>[</span><span class=mi>0</span><span class=p>],</span>
+<span class=p>}</span>
+</code></pre></td></tr></table></div></div><p>它的容量值等于它指向的底层数组 <code>iBuffer</code> 的长度减去切片指向的第一个元素的索引值（在本例中这个值为0）。可以使用内置函数 <code>cap()</code> 来获得切片的容量：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span></code></pre></td><td class=lntd><pre class=chroma><code class=language-go data-lang=go><span class=k>if</span> <span class=nb>cap</span><span class=p>(</span><span class=nx>slice</span><span class=p>)</span> <span class=o>==</span> <span class=nb>len</span><span class=p>(</span><span class=nx>slice</span><span class=p>)</span> <span class=p>{</span>
+    <span class=nx>fmt</span><span class=p>.</span><span class=nf>Println</span><span class=p>(</span><span class=s>&#34;slice is full!&#34;</span><span class=p>)</span>
+<span class=p>}</span>
+</code></pre></td></tr></table></div></div><h2 id=make>Make</h2><p>根据定义，切片的容量值限制了切片可扩展的长度，我们无法扩展一个切片超过它的容量。但是我们可以使用这样的操作来实现这一目的：分配一个新数组，将原数组数据复制过来，然后修改切片使其指向新的数组。</p><p>下面我们来尝试一下。我们可以使用 <code>new()</code> 函数来分配一个更大的数组然后切片，但是使用 <code>make()</code> 函数来代替上述操作更加简单。他一次性完成了分配了一个新的数组并且在数组之上创建了一个切片的操作。 <code>make()</code> 函数接受三个参数：切片类型，它的初始长度，和它的容量，也就是 <code>make</code> 创建的新数组的长度。下面的语句创建了长度为10，容量为15的切片：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span></code></pre></td><td class=lntd><pre class=chroma><code class=language-go data-lang=go><span class=nx>slice</span> <span class=o>:=</span> <span class=nb>make</span><span class=p>([]</span><span class=kt>int</span><span class=p>,</span> <span class=mi>10</span><span class=p>,</span> <span class=mi>15</span><span class=p>)</span>
+<span class=nx>fmt</span><span class=p>.</span><span class=nf>Printf</span><span class=p>(</span><span class=s>&#34;len: %d, cap: %d\n&#34;</span><span class=p>,</span> <span class=nb>len</span><span class=p>(</span><span class=nx>slice</span><span class=p>),</span> <span class=nb>cap</span><span class=p>(</span><span class=nx>slice</span><span class=p>))</span>
+</code></pre></td></tr></table></div></div><p>运行结果为：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre class=chroma><code><span class=lnt>1
+</span></code></pre></td><td class=lntd><pre class=chroma><code class=language-go data-lang=go><span class=nx>len</span><span class=p>:</span> <span class=mi>10</span><span class=p>,</span> <span class=nx>cap</span><span class=p>:</span> <span class=mi>15</span>
+</code></pre></td></tr></table></div></div><p>下面这段代码使切片的容量翻倍，长度不变：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span><span class=lnt>5
+</span><span class=lnt>6
+</span><span class=lnt>7
+</span><span class=lnt>8
+</span></code></pre></td><td class=lntd><pre class=chroma><code class=language-go data-lang=go><span class=nx>slice</span> <span class=o>:=</span> <span class=nb>make</span><span class=p>([]</span><span class=kt>int</span><span class=p>,</span> <span class=mi>10</span><span class=p>,</span> <span class=mi>15</span><span class=p>)</span>
+<span class=nx>fmt</span><span class=p>.</span><span class=nf>Printf</span><span class=p>(</span><span class=s>&#34;len: %d, cap: %d\n&#34;</span><span class=p>,</span> <span class=nb>len</span><span class=p>(</span><span class=nx>slice</span><span class=p>),</span> <span class=nb>cap</span><span class=p>(</span><span class=nx>slice</span><span class=p>))</span>
+<span class=nx>newSlice</span> <span class=o>:=</span> <span class=nb>make</span><span class=p>([]</span><span class=kt>int</span><span class=p>,</span> <span class=nb>len</span><span class=p>(</span><span class=nx>slice</span><span class=p>),</span> <span class=mi>2</span><span class=o>*</span><span class=nb>cap</span><span class=p>(</span><span class=nx>slice</span><span class=p>))</span>
+<span class=k>for</span> <span class=nx>i</span> <span class=o>:=</span> <span class=k>range</span> <span class=nx>slice</span> <span class=p>{</span>
+    <span class=nx>newSlice</span><span class=p>[</span><span class=nx>i</span><span class=p>]</span> <span class=p>=</span> <span class=nx>slice</span><span class=p>[</span><span class=nx>i</span><span class=p>]</span>
+<span class=p>}</span>
+<span class=nx>slice</span> <span class=p>=</span> <span class=nx>newSlice</span>
+<span class=nx>fmt</span><span class=p>.</span><span class=nf>Printf</span><span class=p>(</span><span class=s>&#34;len: %d, cap: %d\n&#34;</span><span class=p>,</span> <span class=nb>len</span><span class=p>(</span><span class=nx>slice</span><span class=p>),</span> <span class=nb>cap</span><span class=p>(</span><span class=nx>slice</span><span class=p>))</span>
+</code></pre></td></tr></table></div></div><p>运行结果为：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span></code></pre></td><td class=lntd><pre class=chroma><code class=language-go data-lang=go><span class=nx>len</span><span class=p>:</span> <span class=mi>10</span><span class=p>,</span> <span class=nx>cap</span><span class=p>:</span> <span class=mi>15</span>
+<span class=nx>len</span><span class=p>:</span> <span class=mi>10</span><span class=p>,</span> <span class=nx>cap</span><span class=p>:</span> <span class=mi>30</span>
+</code></pre></td></tr></table></div></div><p>当创建切片时，长度和容量值通常是相同的。 <code>make</code> 函数对于这种情况有一个简写：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre class=chroma><code><span class=lnt>1
+</span></code></pre></td><td class=lntd><pre class=chroma><code class=language-go data-lang=go><span class=nx>gophers</span> <span class=o>:=</span> <span class=nb>make</span><span class=p>([]</span><span class=nx>Gopher</span><span class=p>,</span> <span class=mi>10</span><span class=p>)</span>
+</code></pre></td></tr></table></div></div><p>切片 <code>gophere</code> 的长度和容量均为10</p><h2 id=copy>Copy</h2><p>上一节的例子中我们使用了一个循环来将数据复制到新的切片中。 <code>Go</code> 提供了一个函数 <code>copy</code> 来使复制过程更加简单。它的参数是两个切片，将数据从第二个切片中复制到第一个切片中：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span></code></pre></td><td class=lntd><pre class=chroma><code class=language-go data-lang=go><span class=nx>newSlice</span> <span class=o>:=</span> <span class=nb>make</span><span class=p>([]</span><span class=kt>int</span><span class=p>,</span> <span class=nb>len</span><span class=p>(</span><span class=nx>slice</span><span class=p>),</span> <span class=mi>2</span><span class=o>*</span><span class=nb>cap</span><span class=p>(</span><span class=nx>slice</span><span class=p>))</span>
+<span class=nb>copy</span><span class=p>(</span><span class=nx>newSlice</span><span class=p>,</span> <span class=nx>slice</span><span class=p>)</span>
+</code></pre></td></tr></table></div></div><p><code>copy</code> 函数只复制它能够复制的值，也就是说，它复制的元素数量是两个切片的长度中的的最小值。它返回值一个 <code>int</code> 值，代表它复制的元素的数量。</p><p>当 <code>copy</code> 的两个参数是同一个值时，他依然可以正确的操作，也就是说我们可以使用 <code>copy</code> 在一个切片中移动元素。下面这个例子展示了如何使用 <code>copy</code> 在切片指定位置插入一个值：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span></code></pre></td><td class=lntd><pre class=chroma><code class=language-go data-lang=go><span class=c1>// Insert inserts the value into the slice at the specified index,
+</span><span class=c1>// which must be in range.
+</span><span class=c1>// The slice must have room for the new element.
+</span><span class=c1></span><span class=kd>func</span> <span class=nf>Insert</span><span class=p>(</span><span class=nx>slice</span> <span class=p>[]</span><span class=kt>int</span><span class=p>,</span> <span class=nx>index</span><span class=p>,</span> <span class=nx>value</span> <span class=kt>int</span><span class=p>)</span> <span class=p>[]</span><span class=kt>int</span> <span class=p>{</span>
+    <span class=c1>// Grow the slice by one element.
+</span><span class=c1></span>    <span class=nx>slice</span> <span class=p>=</span> <span class=nx>slice</span><span class=p>[</span><span class=mi>0</span> <span class=p>:</span> <span class=nb>len</span><span class=p>(</span><span class=nx>slice</span><span class=p>)</span><span class=o>+</span><span class=mi>1</span><span class=p>]</span>
+    <span class=c1>// Use copy to move the upper part of the slice out of the way and open a hole.
+</span><span class=c1></span>    <span class=nb>copy</span><span class=p>(</span><span class=nx>slice</span><span class=p>[</span><span class=nx>index</span><span class=o>+</span><span class=mi>1</span><span class=p>:],</span> <span class=nx>slice</span><span class=p>[</span><span class=nx>index</span><span class=p>:])</span>
+    <span class=c1>// Store the new value.
+</span><span class=c1></span>    <span class=nx>slice</span><span class=p>[</span><span class=nx>index</span><span class=p>]</span> <span class=p>=</span> <span class=nx>value</span>
+    <span class=c1>// Return the result.
+</span><span class=c1></span>    <span class=k>return</span> <span class=nx>slice</span>
+<span class=p>}</span>
+</code></pre></td></tr></table></div></div><p>关于这个函数有几件事需要注意：首先，它必须返回一个新的切片，因为切片的长度值已经被修改了；其次，它使用了简写 <code>slice[i:]</code> ，等同于 <code>slice[i:len(slice)]</code> ，当然我们也可以忽略这个表达式的第一个值，它默认为0，也就是 <code>slice[:]</code> ，它代表这个切片本身。当我们创建一个拥有数组全部元素的切片时，我们就可以这么写：<code>array[:]</code> 。</p><p>好了，现在我们来运行一下上面这个例子：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span><span class=lnt>5
+</span><span class=lnt>6
+</span><span class=lnt>7
+</span></code></pre></td><td class=lntd><pre class=chroma><code class=language-go data-lang=go><span class=nx>slice</span> <span class=o>:=</span> <span class=nb>make</span><span class=p>([]</span><span class=kt>int</span><span class=p>,</span> <span class=mi>10</span><span class=p>,</span> <span class=mi>20</span><span class=p>)</span> <span class=c1>// Note capacity &gt; length: room to add element.
+</span><span class=c1></span><span class=k>for</span> <span class=nx>i</span> <span class=o>:=</span> <span class=k>range</span> <span class=nx>slice</span> <span class=p>{</span>
+    <span class=nx>slice</span><span class=p>[</span><span class=nx>i</span><span class=p>]</span> <span class=p>=</span> <span class=nx>i</span>
+<span class=p>}</span>
+<span class=nx>fmt</span><span class=p>.</span><span class=nf>Println</span><span class=p>(</span><span class=nx>slice</span><span class=p>)</span>
+<span class=nx>slice</span> <span class=p>=</span> <span class=nf>Insert</span><span class=p>(</span><span class=nx>slice</span><span class=p>,</span> <span class=mi>5</span><span class=p>,</span> <span class=mi>99</span><span class=p>)</span>
+<span class=nx>fmt</span><span class=p>.</span><span class=nf>Println</span><span class=p>(</span><span class=nx>slice</span><span class=p>)</span>
+</code></pre></td></tr></table></div></div><p>运行结果为：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span></code></pre></td><td class=lntd><pre class=chroma><code class=language-go data-lang=go><span class=p>[</span><span class=mi>0</span> <span class=mi>1</span> <span class=mi>2</span> <span class=mi>3</span> <span class=mi>4</span> <span class=mi>5</span> <span class=mi>6</span> <span class=mi>7</span> <span class=mi>8</span> <span class=mi>9</span><span class=p>]</span>
+<span class=p>[</span><span class=mi>0</span> <span class=mi>1</span> <span class=mi>2</span> <span class=mi>3</span> <span class=mi>4</span> <span class=mi>99</span> <span class=mi>5</span> <span class=mi>6</span> <span class=mi>7</span> <span class=mi>8</span> <span class=mi>9</span><span class=p>]</span>
+</code></pre></td></tr></table></div></div><h2 id=append-an-example>Append: An example</h2><p>在<a href=#capacity rel>Capacity</a>那一节中，我们写了个 <code>Extend</code> 函数来为切片扩展一个元素。程序在运行时会报错，因为我们设定的切片的容量太小，导致底层数组越界访问造成程序崩溃。现在我们已经解决了这一问题，可以编写一个健壮的 <code>Extend</code> 的实现：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span></code></pre></td><td class=lntd><pre class=chroma><code class=language-go data-lang=go><span class=kd>func</span> <span class=nf>Extend</span><span class=p>(</span><span class=nx>slice</span> <span class=p>[]</span><span class=kt>int</span><span class=p>,</span> <span class=nx>element</span> <span class=kt>int</span><span class=p>)</span> <span class=p>[]</span><span class=kt>int</span> <span class=p>{</span>
+    <span class=nx>n</span> <span class=o>:=</span> <span class=nb>len</span><span class=p>(</span><span class=nx>slice</span><span class=p>)</span>
+    <span class=k>if</span> <span class=nx>n</span> <span class=o>==</span> <span class=nb>cap</span><span class=p>(</span><span class=nx>slice</span><span class=p>)</span> <span class=p>{</span>
+        <span class=c1>// Slice is full; must grow.
+</span><span class=c1></span>        <span class=c1>// We double its size and add 1, so if the size is zero we still grow.
+</span><span class=c1></span>        <span class=nx>newSlice</span> <span class=o>:=</span> <span class=nb>make</span><span class=p>([]</span><span class=kt>int</span><span class=p>,</span> <span class=nb>len</span><span class=p>(</span><span class=nx>slice</span><span class=p>),</span> <span class=mi>2</span><span class=o>*</span><span class=nb>len</span><span class=p>(</span><span class=nx>slice</span><span class=p>)</span><span class=o>+</span><span class=mi>1</span><span class=p>)</span>
+        <span class=nb>copy</span><span class=p>(</span><span class=nx>newSlice</span><span class=p>,</span> <span class=nx>slice</span><span class=p>)</span>
+        <span class=nx>slice</span> <span class=p>=</span> <span class=nx>newSlice</span>
+    <span class=p>}</span>
+    <span class=nx>slice</span> <span class=p>=</span> <span class=nx>slice</span><span class=p>[</span><span class=mi>0</span> <span class=p>:</span> <span class=nx>n</span><span class=o>+</span><span class=mi>1</span><span class=p>]</span>
+    <span class=nx>slice</span><span class=p>[</span><span class=nx>n</span><span class=p>]</span> <span class=p>=</span> <span class=nx>element</span>
+    <span class=k>return</span> <span class=nx>slice</span>
+<span class=p>}</span>
+</code></pre></td></tr></table></div></div><p>这个例子中我们返回了一个切片，因为与原切片相比，返回的切片实际上指向了我们重新分配的底层数组，与原切片完全不同。下面这段代码展示了切片在填充过程中发生了什么：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span><span class=lnt>5
+</span><span class=lnt>6
+</span></code></pre></td><td class=lntd><pre class=chroma><code class=language-go data-lang=go><span class=nx>slice</span> <span class=o>:=</span> <span class=nb>make</span><span class=p>([]</span><span class=kt>int</span><span class=p>,</span> <span class=mi>0</span><span class=p>,</span> <span class=mi>5</span><span class=p>)</span>
+<span class=k>for</span> <span class=nx>i</span> <span class=o>:=</span> <span class=mi>0</span><span class=p>;</span> <span class=nx>i</span> <span class=p>&lt;</span> <span class=mi>10</span><span class=p>;</span> <span class=nx>i</span><span class=o>++</span> <span class=p>{</span>
+    <span class=nx>slice</span> <span class=p>=</span> <span class=nf>Extend</span><span class=p>(</span><span class=nx>slice</span><span class=p>,</span> <span class=nx>i</span><span class=p>)</span>
+    <span class=nx>fmt</span><span class=p>.</span><span class=nf>Printf</span><span class=p>(</span><span class=s>&#34;len=%d cap=%d slice=%v\n&#34;</span><span class=p>,</span> <span class=nb>len</span><span class=p>(</span><span class=nx>slice</span><span class=p>),</span> <span class=nb>cap</span><span class=p>(</span><span class=nx>slice</span><span class=p>),</span> <span class=nx>slice</span><span class=p>)</span>
+    <span class=nx>fmt</span><span class=p>.</span><span class=nf>Println</span><span class=p>(</span><span class=s>&#34;address of 0th element:&#34;</span><span class=p>,</span> <span class=o>&amp;</span><span class=nx>slice</span><span class=p>[</span><span class=mi>0</span><span class=p>])</span>
+<span class=p>}</span>
+</code></pre></td></tr></table></div></div><p>其结果为：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span></code></pre></td><td class=lntd><pre class=chroma><code class=language-fallback data-lang=fallback>len=1 cap=5 slice=[0]
+address of 0th element: 0xc00007a030
+len=2 cap=5 slice=[0 1]
+address of 0th element: 0xc00007a030
+len=3 cap=5 slice=[0 1 2]
+address of 0th element: 0xc00007a030
+len=4 cap=5 slice=[0 1 2 3]
+address of 0th element: 0xc00007a030
+len=5 cap=5 slice=[0 1 2 3 4]
+address of 0th element: 0xc00007a030
+len=6 cap=11 slice=[0 1 2 3 4 5]
+address of 0th element: 0xc000062060
+len=7 cap=11 slice=[0 1 2 3 4 5 6]
+address of 0th element: 0xc000062060
+len=8 cap=11 slice=[0 1 2 3 4 5 6 7]
+address of 0th element: 0xc000062060
+len=9 cap=11 slice=[0 1 2 3 4 5 6 7 8]
+address of 0th element: 0xc000062060
+len=10 cap=11 slice=[0 1 2 3 4 5 6 7 8 9]
+address of 0th element: 0xc000062060
+</code></pre></td></tr></table></div></div><p>原始数组容量只有5，当原始数组被填满时，重新分配了一个容量为11的数组，此时第0个元素的地址也改变了。</p><p>根据这个例子的思路，我们可以写一个更好的函数 <code>Append</code> 来为切片一次性扩充多个元素。这我们会用到 <code>Go</code> 语言的可变参数函数，在声明可变参数函数时，需要在参数列表的最后一个参数类型之前加上省略符号“&mldr;”，这表示该函数会接收任意数量的该类型参数。</p><p>作为最初的实现，我们可以将对 <code>Extend</code> 进行多次调用。 <code>Append</code> 的函数签名如下：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre class=chroma><code><span class=lnt>1
+</span></code></pre></td><td class=lntd><pre class=chroma><code class=language-go data-lang=go><span class=kd>func</span> <span class=nf>Append</span><span class=p>(</span><span class=nx>slice</span> <span class=p>[]</span><span class=kt>int</span><span class=p>,</span> <span class=nx>items</span> <span class=o>...</span><span class=kt>int</span><span class=p>)</span> <span class=p>[]</span><span class=kt>int</span>
+</code></pre></td></tr></table></div></div><p><code>Append</code> 函数接收一个切片以及任意多个 <code>int</code> 类型的元素，这些元素实际上被当成一个切片来进行处理：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span><span class=lnt>5
+</span><span class=lnt>6
+</span><span class=lnt>7
+</span><span class=lnt>8
+</span></code></pre></td><td class=lntd><pre class=chroma><code class=language-go data-lang=go><span class=c1>// Append appends the items to the slice.
+</span><span class=c1>// First version: just loop calling Extend.
+</span><span class=c1></span><span class=kd>func</span> <span class=nf>Append</span><span class=p>(</span><span class=nx>slice</span> <span class=p>[]</span><span class=kt>int</span><span class=p>,</span> <span class=nx>items</span> <span class=o>...</span><span class=kt>int</span><span class=p>)</span> <span class=p>[]</span><span class=kt>int</span> <span class=p>{</span>
+    <span class=k>for</span> <span class=nx>_</span><span class=p>,</span> <span class=nx>item</span> <span class=o>:=</span> <span class=k>range</span> <span class=nx>items</span> <span class=p>{</span>
+        <span class=nx>slice</span> <span class=p>=</span> <span class=nf>Extend</span><span class=p>(</span><span class=nx>slice</span><span class=p>,</span> <span class=nx>item</span><span class=p>)</span>
+    <span class=p>}</span>
+    <span class=k>return</span> <span class=nx>slice</span>
+<span class=p>}</span>
+</code></pre></td></tr></table></div></div><p>执行以下语句：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span></code></pre></td><td class=lntd><pre class=chroma><code class=language-go data-lang=go><span class=nx>slice</span> <span class=o>:=</span> <span class=p>[]</span><span class=kt>int</span><span class=p>{</span><span class=mi>0</span><span class=p>,</span> <span class=mi>1</span><span class=p>,</span> <span class=mi>2</span><span class=p>,</span> <span class=mi>3</span><span class=p>,</span> <span class=mi>4</span><span class=p>}</span>
+<span class=nx>fmt</span><span class=p>.</span><span class=nf>Println</span><span class=p>(</span><span class=nx>slice</span><span class=p>)</span>
+<span class=nx>slice</span> <span class=p>=</span> <span class=nf>Append</span><span class=p>(</span><span class=nx>slice</span><span class=p>,</span> <span class=mi>5</span><span class=p>,</span> <span class=mi>6</span><span class=p>,</span> <span class=mi>7</span><span class=p>,</span> <span class=mi>8</span><span class=p>)</span>
+<span class=nx>fmt</span><span class=p>.</span><span class=nf>Println</span><span class=p>(</span><span class=nx>slice</span><span class=p>)</span>
+</code></pre></td></tr></table></div></div><p>其结果为：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span></code></pre></td><td class=lntd><pre class=chroma><code class=language-fallback data-lang=fallback>[0 1 2 3 4]
+[0 1 2 3 4 5 6 7 8]
+</code></pre></td></tr></table></div></div><p>注意到这里我们同时声明并初始化了一个切片：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre class=chroma><code><span class=lnt>1
+</span></code></pre></td><td class=lntd><pre class=chroma><code class=language-go data-lang=go><span class=nx>slice</span> <span class=o>:=</span> <span class=p>[]</span><span class=kt>int</span><span class=p>{</span><span class=mi>0</span><span class=p>,</span> <span class=mi>1</span><span class=p>,</span> <span class=mi>2</span><span class=p>,</span> <span class=mi>3</span><span class=p>,</span> <span class=mi>4</span><span class=p>}</span>
+</code></pre></td></tr></table></div></div><p>我们不仅可以传入任意多个参数，还可以以切片的形式传入参数，不过必须在切片后面加上 <code>...</code> ：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span><span class=lnt>5
+</span></code></pre></td><td class=lntd><pre class=chroma><code class=language-go data-lang=go><span class=nx>slice1</span> <span class=o>:=</span> <span class=p>[]</span><span class=kt>int</span><span class=p>{</span><span class=mi>0</span><span class=p>,</span> <span class=mi>1</span><span class=p>,</span> <span class=mi>2</span><span class=p>,</span> <span class=mi>3</span><span class=p>,</span> <span class=mi>4</span><span class=p>}</span>
+<span class=nx>slice2</span> <span class=o>:=</span> <span class=p>[]</span><span class=kt>int</span><span class=p>{</span><span class=mi>55</span><span class=p>,</span> <span class=mi>66</span><span class=p>,</span> <span class=mi>77</span><span class=p>}</span>
+<span class=nx>fmt</span><span class=p>.</span><span class=nf>Println</span><span class=p>(</span><span class=nx>slice1</span><span class=p>)</span>
+<span class=nx>slice1</span> <span class=p>=</span> <span class=nf>Append</span><span class=p>(</span><span class=nx>slice1</span><span class=p>,</span> <span class=nx>slice2</span><span class=o>...</span><span class=p>)</span> <span class=c1>// The &#39;...&#39; is essential!
+</span><span class=c1></span><span class=nx>fmt</span><span class=p>.</span><span class=nf>Println</span><span class=p>(</span><span class=nx>slice1</span>
+</code></pre></td></tr></table></div></div><p>其结果为：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span></code></pre></td><td class=lntd><pre class=chroma><code class=language-fallback data-lang=fallback>[0 1 2 3 4]
+[0 1 2 3 4 55 66 77]
+</code></pre></td></tr></table></div></div><p>我们可以改写一下重分配数组的条件，使其更有效率：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span></code></pre></td><td class=lntd><pre class=chroma><code class=language-go data-lang=go><span class=c1>// Append appends the elements to the slice.
+</span><span class=c1>// Efficient version.
+</span><span class=c1></span><span class=kd>func</span> <span class=nf>Append</span><span class=p>(</span><span class=nx>slice</span> <span class=p>[]</span><span class=kt>int</span><span class=p>,</span> <span class=nx>elements</span> <span class=o>...</span><span class=kt>int</span><span class=p>)</span> <span class=p>[]</span><span class=kt>int</span> <span class=p>{</span>
+    <span class=nx>n</span> <span class=o>:=</span> <span class=nb>len</span><span class=p>(</span><span class=nx>slice</span><span class=p>)</span>
+    <span class=nx>total</span> <span class=o>:=</span> <span class=nb>len</span><span class=p>(</span><span class=nx>slice</span><span class=p>)</span> <span class=o>+</span> <span class=nb>len</span><span class=p>(</span><span class=nx>elements</span><span class=p>)</span>
+    <span class=k>if</span> <span class=nx>total</span> <span class=p>&gt;</span> <span class=nb>cap</span><span class=p>(</span><span class=nx>slice</span><span class=p>)</span> <span class=p>{</span>
+        <span class=c1>// Reallocate. Grow to 1.5 times the new size, so we can still grow.
+</span><span class=c1></span>        <span class=nx>newSize</span> <span class=o>:=</span> <span class=nx>total</span><span class=o>*</span><span class=mi>3</span><span class=o>/</span><span class=mi>2</span> <span class=o>+</span> <span class=mi>1</span>
+        <span class=nx>newSlice</span> <span class=o>:=</span> <span class=nb>make</span><span class=p>([]</span><span class=kt>int</span><span class=p>,</span> <span class=nx>total</span><span class=p>,</span> <span class=nx>newSize</span><span class=p>)</span>
+        <span class=nb>copy</span><span class=p>(</span><span class=nx>newSlice</span><span class=p>,</span> <span class=nx>slice</span><span class=p>)</span>
+        <span class=nx>slice</span> <span class=p>=</span> <span class=nx>newSlice</span>
+    <span class=p>}</span>
+    <span class=nx>slice</span> <span class=p>=</span> <span class=nx>slice</span><span class=p>[:</span><span class=nx>total</span><span class=p>]</span>
+    <span class=nb>copy</span><span class=p>(</span><span class=nx>slice</span><span class=p>[</span><span class=nx>n</span><span class=p>:],</span> <span class=nx>elements</span><span class=p>)</span>
+    <span class=k>return</span> <span class=nx>slice</span>
+<span class=p>}</span>
+</code></pre></td></tr></table></div></div><p>这里我们使用了两次 <code>copy</code> ，一次用于将数据复制进新的数组，一次用于将新的数据复制到数组的末尾。这和最初的函数具有同样的效力。</p><h2 id=append-the-build-in-function>Append: The build-in function</h2><p>到此我们已经明白了内置函数 <code>append</code> 的设计动机。它和我们的 <code>Append</code> 相似，效率上也差不多，但是它适用于任何切片类型。</p><p><code>Go</code> 语言的一个缺点是任何泛型操作必须由运行时提供。以后也许会改变，但是现在，为了使切片操作更加简单， <code>Go</code> 提供了内置的泛型 <code>append</code> 函数。它适用于任何类型。</p><p>由于切片头结构体经常会被 <code>append</code> 修改，你需要保存返回的切片值。事实上，编译器不允许你在不保存结果的情况下调用 <code>append</code> 。</p><p>下面是一些使用 <code>append</code> 的语句：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span></code></pre></td><td class=lntd><pre class=chroma><code class=language-go data-lang=go><span class=c1>// Create a couple of starter slices.
+</span><span class=c1></span><span class=nx>slice</span> <span class=o>:=</span> <span class=p>[]</span><span class=kt>int</span><span class=p>{</span><span class=mi>1</span><span class=p>,</span> <span class=mi>2</span><span class=p>,</span> <span class=mi>3</span><span class=p>}</span>
+<span class=nx>slice2</span> <span class=o>:=</span> <span class=p>[]</span><span class=kt>int</span><span class=p>{</span><span class=mi>55</span><span class=p>,</span> <span class=mi>66</span><span class=p>,</span> <span class=mi>77</span><span class=p>}</span>
+<span class=nx>fmt</span><span class=p>.</span><span class=nf>Println</span><span class=p>(</span><span class=s>&#34;Start slice: &#34;</span><span class=p>,</span> <span class=nx>slice</span><span class=p>)</span>
+<span class=nx>fmt</span><span class=p>.</span><span class=nf>Println</span><span class=p>(</span><span class=s>&#34;Start slice2:&#34;</span><span class=p>,</span> <span class=nx>slice2</span><span class=p>)</span>
+
+<span class=c1>// Add an item to a slice.
+</span><span class=c1></span><span class=nx>slice</span> <span class=p>=</span> <span class=nb>append</span><span class=p>(</span><span class=nx>slice</span><span class=p>,</span> <span class=mi>4</span><span class=p>)</span>
+<span class=nx>fmt</span><span class=p>.</span><span class=nf>Println</span><span class=p>(</span><span class=s>&#34;Add one item:&#34;</span><span class=p>,</span> <span class=nx>slice</span><span class=p>)</span>
+
+<span class=c1>// Add one slice to another.
+</span><span class=c1></span><span class=nx>slice</span> <span class=p>=</span> <span class=nb>append</span><span class=p>(</span><span class=nx>slice</span><span class=p>,</span> <span class=nx>slice2</span><span class=o>...</span><span class=p>)</span>
+<span class=nx>fmt</span><span class=p>.</span><span class=nf>Println</span><span class=p>(</span><span class=s>&#34;Add one slice:&#34;</span><span class=p>,</span> <span class=nx>slice</span><span class=p>)</span>
+
+<span class=c1>// Make a copy of a slice (of int).
+</span><span class=c1></span><span class=nx>slice3</span> <span class=o>:=</span> <span class=nb>append</span><span class=p>([]</span><span class=nb>int</span><span class=p>(</span><span class=kc>nil</span><span class=p>),</span> <span class=nx>slice</span><span class=o>...</span><span class=p>)</span>
+<span class=nx>fmt</span><span class=p>.</span><span class=nf>Println</span><span class=p>(</span><span class=s>&#34;Copy a slice:&#34;</span><span class=p>,</span> <span class=nx>slice3</span><span class=p>)</span>
+
+<span class=c1>// Copy a slice to the end of itself.
+</span><span class=c1></span><span class=nx>fmt</span><span class=p>.</span><span class=nf>Println</span><span class=p>(</span><span class=s>&#34;Before append to self:&#34;</span><span class=p>,</span> <span class=nx>slice</span><span class=p>)</span>
+<span class=nx>slice</span> <span class=p>=</span> <span class=nb>append</span><span class=p>(</span><span class=nx>slice</span><span class=p>,</span> <span class=nx>slice</span><span class=o>...</span><span class=p>)</span>
+<span class=nx>fmt</span><span class=p>.</span><span class=nf>Println</span><span class=p>(</span><span class=s>&#34;After append to self:&#34;</span><span class=p>,</span> <span class=nx>slice</span><span class=p>)</span>
+</code></pre></td></tr></table></div></div><p>运行结果为：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span><span class=lnt>5
+</span><span class=lnt>6
+</span><span class=lnt>7
+</span></code></pre></td><td class=lntd><pre class=chroma><code class=language-fallback data-lang=fallback>Start slice:  [1 2 3]
+Start slice2: [55 66 77]
+Add one item: [1 2 3 4]
+Add one slice: [1 2 3 4 55 66 77]
+Copy a slice: [1 2 3 4 55 66 77]
+Before append to self: [1 2 3 4 55 66 77]
+After append to self: [1 2 3 4 55 66 77 1 2 3 4 55 66 77]
+</code></pre></td></tr></table></div></div><p>有必要花点时间思考一下最后一行的示例来理解切片的设计如何使这个操作正确的执行</p><p>在<a href=https://github.com/golang/go/wiki/SliceTricks target=_blank rel="noopener noreffer">&ldquo;Slice Tricks&rdquo;</a>有更多的关于 <code>append</code> 、<code>copy</code> 以及切片的其他用法的例子。</p><h2 id=nil>Nil</h2><p>现在我们可以来看一下 <code>nil</code> 切片代表着什么。自然的，它代表着切片头结构体的零值：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span><span class=lnt>5
+</span></code></pre></td><td class=lntd><pre class=chroma><code class=language-go data-lang=go><span class=nx>sliceHeader</span><span class=p>{</span>
+    <span class=nx>Length</span><span class=p>:</span>        <span class=mi>0</span><span class=p>,</span>
+    <span class=nx>Capacity</span><span class=p>:</span>      <span class=mi>0</span><span class=p>,</span>
+    <span class=nx>ZerothElement</span><span class=p>:</span> <span class=kc>nil</span><span class=p>,</span>
+<span class=p>}</span>
+</code></pre></td></tr></table></div></div><p>或者是：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre class=chroma><code><span class=lnt>1
+</span></code></pre></td><td class=lntd><pre class=chroma><code class=language-go data-lang=go><span class=nx>sliceHeader</span><span class=p>{}</span>
+</code></pre></td></tr></table></div></div><p>注意此时指针的值也是 <code>nil</code> 。而由 <code>array[0:0]</code> 创建的切片长度为零，但是它的指针值不是 <code>nil</code> ，因为它确实指向了一个存在的数组，所以它不是一个 <code>nil</code> 切片。</p><p>要知道，一个空的切片（假设它的容量不为0）是可以扩充的，但是一个 <code>nil</code> 切片由于没有可以填充元素的底层数组，所以是无法扩充的。</p><p><code>nil</code> 可以通过重分配数组的方式来追加元素，正如上一节所讲的。</p><h2 id=strings>Strings</h2><p>这一节用于简短的介绍一下 <code>Go</code> 语言中在切片背景下的字符串。</p><p>字符串很简单：它是只读的字节切片，外加一点来自语言的额外的语法支持。</p><p>因为字符串是只读的，所以它们并不需要容量（你不能扩充他们），但是大多数情况下你可以把它们视为只读的字节切片。</p><p>我们可以通过索引访问单个字节：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre class=chroma><code><span class=lnt>1
+</span></code></pre></td><td class=lntd><pre class=chroma><code class=language-go data-lang=go><span class=nx>slash</span> <span class=o>:=</span> <span class=s>&#34;/usr/ken&#34;</span><span class=p>[</span><span class=mi>0</span><span class=p>]</span> <span class=c1>// yields the byte value &#39;/&#39;.
+</span></code></pre></td></tr></table></div></div><p>可以对字符串进行切片来获取子串：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre class=chroma><code><span class=lnt>1
+</span></code></pre></td><td class=lntd><pre class=chroma><code class=language-go data-lang=go><span class=nx>usr</span> <span class=o>:=</span> <span class=s>&#34;/usr/ken&#34;</span><span class=p>[</span><span class=mi>0</span><span class=p>:</span><span class=mi>4</span><span class=p>]</span> <span class=c1>// yields the string &#34;/usr&#34;
+</span></code></pre></td></tr></table></div></div><p>当我们对字符串进行切片时，幕后发生了什么你应该已经了解了。</p><p>我们也可以用一个普通的字节切片来创建字符串：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre class=chroma><code><span class=lnt>1
+</span></code></pre></td><td class=lntd><pre class=chroma><code class=language-go data-lang=go><span class=nx>str</span> <span class=o>:=</span> <span class=nb>string</span><span class=p>(</span><span class=nx>slice</span><span class=p>)</span>
+</code></pre></td></tr></table></div></div><p>或者反过来操作：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre class=chroma><code><span class=lnt>1
+</span></code></pre></td><td class=lntd><pre class=chroma><code class=language-go data-lang=go><span class=nx>slice</span> <span class=o>:=</span> <span class=p>[]</span><span class=nb>byte</span><span class=p>(</span><span class=nx>usr</span><span class=p>)</span>
+</code></pre></td></tr></table></div></div><p>字符串的底层数组对于我们来说是不可见的，除了通过字符串本身，我们无法访问到它的内容。也就是说在进行上面的转换时，必须复制数组，不过 <code>Go</code> 语言帮我们处理了。完成转换之后，对于字节切片底层数组的修改并不会影响对应的字符串，因为他们指向的是不同的底层数组。</p><p>这种类切片的字符串设计使得创建子字符串非常容易，我们只需要创建一个字符串头即可，由于字符串是只读的，因此子串可以和原字符串安全的共享相同的底层数组。</p><p>这篇<a href=https://blog.golang.org/strings target=_blank rel="noopener noreffer">博客</a>更加深入的介绍了有关字符串的内容。</p><h2 id=conclusion>Conclusion</h2><p>了解切片的工作原理有助于了解切片的实现方式。一个关键的数据结构，即切片头结构体，它与切片变量相关联，并且它描述了底层数组的一部分。当我们传递切片值时，将传递切片头结构体的副本，但它始终指向同一个底层数组。</p><p>一旦你了解了切片的工作原理，你会发现切片不仅便于使用，而且非常强大，特别是在多个内置函数的加持下。</p><h2 id=more-reading>More reading</h2><p>除了前面提到的<a href=https://github.com/golang/go/wiki/SliceTricks target=_blank rel="noopener noreffer">&ldquo;Slice Tricks&rdquo;</a>，<a href=https://blog.go-zh.org/go-slices-usage-and-internals target=_blank rel="noopener noreffer">Go Slices</a>这篇博客用图表描述了内存布局的细节。Russ Cox写的<a href=https://research.swtch.com/godata target=_blank rel="noopener noreffer">Go Data Structures</a>这篇文章包括了对切片的讨论以及其他 <code>Go</code> 语言内置的数据结构。</p><p>还有很多可用的资料，但是最好的学习方法还是在coding中去使用它们。</p></div><div class=post-footer id=post-footer><div class=post-info><div class=post-info-line><div class=post-info-mod><span>更新于 2021-05-05</span></div><div class=post-info-license></div></div><div class=post-info-line><div class=post-info-md><span><a class=link-to-markdown href=/slices_in_go/index.md target=_blank>阅读原始文档</a></span></div><div class=post-info-share><span></span></div></div></div><div class=post-info-more><section class=post-tags><i class="fas fa-tags fa-fw"></i>&nbsp;<a href=/tags/go/>Go</a>,&nbsp;<a href=/tags/%E5%88%87%E7%89%87/>切片</a></section><section><span><a href=javascript:void(0); onclick=window.history.back()>返回</a></span>&nbsp;|&nbsp;<span><a href=/>主页</a></span></section></div><div class=post-nav><a href=/burrow-evm/ class=next rel=next title="Hyperledger Burrow中的evm及相关组件源码分析">Hyperledger Burrow中的evm及相关组件源码分析<i class="fas fa-angle-right fa-fw"></i></a></div></div><div id=comments></div></article></div></main><footer class=footer><div class=footer-container><div class=footer-line><i class="far fa-copyright fa-fw"></i><span itemprop=copyrightYear>2021</span><span class=author itemprop=copyrightHolder>&nbsp;<a href=https://zhangxu1814.github.io target=_blank>zhangxu1814</a></span>&nbsp;|&nbsp;<span class=license><a rel="license external nofollow noopener noreffer" href=https://creativecommons.org/licenses/by-nc/4.0/ target=_blank>CC BY-NC 4.0</a></span></div></div></footer></div><div id=fixed-buttons><a href=# id=back-to-top class=fixed-button title=回到顶部><i class="fas fa-arrow-up fa-fw"></i>
+</a><a href=# id=view-comments class=fixed-button title=查看评论><i class="fas fa-comment fa-fw"></i></a></div><link rel=stylesheet href=/lib/katex/katex.min.css><link rel=stylesheet href=/lib/katex/copy-tex.min.css><link rel=stylesheet href=/lib/cookieconsent/cookieconsent.min.css><script type=text/javascript src=/lib/smooth-scroll/smooth-scroll.min.js></script><script type=text/javascript src=/lib/autocomplete/autocomplete.min.js></script><script type=text/javascript src=/lib/algoliasearch/algoliasearch-lite.umd.min.js></script><script type=text/javascript src=/lib/lazysizes/lazysizes.min.js></script><script type=text/javascript src=/lib/clipboard/clipboard.min.js></script><script type=text/javascript src=/lib/katex/katex.min.js></script><script type=text/javascript src=/lib/katex/auto-render.min.js></script><script type=text/javascript src=/lib/katex/copy-tex.min.js></script><script type=text/javascript src=/lib/katex/mhchem.min.js></script><script type=text/javascript src=/lib/cookieconsent/cookieconsent.min.js></script><script type=text/javascript>window.config={code:{copyTitle:"复制到剪贴板",maxShownLines:10},comment:{},cookieconsent:{content:{dismiss:"同意",link:"了解更多",message:"本网站使用 Cookies 来改善您的浏览体验."},enable:!0,palette:{button:{background:"#f0f0f0"},popup:{background:"#1aa3ff"}},theme:"edgeless"},math:{delimiters:[{display:!0,left:"$$",right:"$$"},{display:!0,left:"\\[",right:"\\]"},{display:!1,left:"$",right:"$"},{display:!1,left:"\\(",right:"\\)"}],strict:!1},search:{algoliaAppID:"",algoliaIndex:"",algoliaSearchKey:"",highlightTag:"em",maxResultLength:10,noResultsFound:"没有找到结果",snippetLength:50,type:"algolia"}}</script><script type=text/javascript src=/js/theme.min.js></script></body></html>

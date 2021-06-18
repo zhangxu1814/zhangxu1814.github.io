@@ -1,0 +1,9 @@
+<rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0"><channel><title>Go - 标签 - SSSSSSS</title><link>https://zhangxu1814.github.io/tags/go/</link><description>Go - 标签 - SSSSSSS</description><generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>zhangxu1814@qq.com (zhangxu1814)</managingEditor><webMaster>zhangxu1814@qq.com (zhangxu1814)</webMaster><lastBuildDate>Thu, 17 Jun 2021 20:53:34 +0800</lastBuildDate><atom:link href="https://zhangxu1814.github.io/tags/go/" rel="self" type="application/rss+xml"/><item><title>interface in go</title><link>https://zhangxu1814.github.io/interface_in_go/</link><pubDate>Thu, 17 Jun 2021 20:53:34 +0800</pubDate><author>作者</author><guid>https://zhangxu1814.github.io/interface_in_go/</guid><description>&lt;!-- 此处内容将作为摘要，若为空，则将description变量的内容作为摘要 --></description></item><item><title>slice in Go</title><link>https://zhangxu1814.github.io/slices_in_go/</link><pubDate>Wed, 05 May 2021 19:18:25 +0800</pubDate><author>作者</author><guid>https://zhangxu1814.github.io/slices_in_go/</guid><description><![CDATA[<div class="details admonition note open">
+        <div class="details-summary admonition-title">
+            <i class="icon fas fa-pencil-alt fa-fw"></i>注意<i class="details-icon fas fa-angle-right fa-fw"></i>
+        </div>
+        <div class="details-content">
+            <div class="admonition-content">本文翻译自<a href="https://blog.golang.org/slices" target="_blank" rel="noopener noreffer">https://blog.golang.org/slices</a></div>
+        </div>
+    </div>
+<!-- 此处内容将作为摘要，若为空，则将description变量的内容作为摘要 -->]]></description></item></channel></rss>
