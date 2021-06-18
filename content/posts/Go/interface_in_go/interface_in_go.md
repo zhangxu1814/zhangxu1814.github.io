@@ -113,11 +113,11 @@ func (i Binary) Get() uint64 {
 
 一个Binary类型的值是一个64位的Integer，占两个字长。这里声明一个变量b为一个值为200的Binary类型，如下图所示：
 
-![image1](images/image1.png)
+![image1](image1.png)
 
 一个接口值代表了了一对内容：一个指针指向存储在该接口中的具体的底层类型描述符，另一个指针指向该具体类型的具体的值。这里声明一个变量s，s是一个Stringer接口类型，其实际存储的是上面声明的变量b：
 
-![image2](images/image2.png)
+![image2](image2.png)
 
 上图中的指针图标是灰色的，用以强调它们是隐式的，不直接暴露给go程序
 
