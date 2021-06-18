@@ -1,5 +1,5 @@
 ---
-title: ""
+title: "interface in go"
 subtitle: ""
 date: 2021-06-17T20:53:34+08:00
 description: ""
